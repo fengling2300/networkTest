@@ -1,7 +1,7 @@
-﻿iOS使用自签名证书实现HTTPS请求
+<header><B>iOS使用自签名证书实现HTTPS请求</B></header>
 由于苹果规定2017年1月1日以后，所有APP都要使用HTTPS进行网络请求，否则无法上架，因此研究了一下在iOS中使用HTTPS请求的实现。相信大家对HTTPS都或多或少有些了解，这里我就不再介绍了，主要功能就是将传输的报文进行加密，提高安全性。
 
-1、证书准备
+<B>1、证书准备</B>
 
 证书分为两种，一种是花钱向认证的机构购买的证书，服务端如果使用的是这类证书的话，那一般客户端不需要做什么，用HTTPS进行请求就行了，苹果内置了那些受信任的根证书的。另一种是自己制作的证书，使用这类证书的话是不受信任的（当然也不用花钱买），因此需要我们在代码中将该证书设置为信任证书。
 
@@ -21,37 +21,32 @@ keytool -delete -keystore ca.jks -alias ca -storepass 123456
 
 然后在文件夹空白处按住ctrl+shift点击右键，选择在此处打开命令窗口，在命令窗口中输入“start.bat ip/域名”来执行批处理文件，其中start.bat是添加了上述命令的批处理文件，ip/域名即你服务器的ip或者域名。执行成功后会生成一个.jks文件和一个以你的ip或域名命名的文件夹，文件夹中有一个.cer的证书，这边的.jks文件将在服务端使用.cer文件将在客户端使用，到这里证书的准备工作就完成了。
 
-2、服务端配置
+<B>2、服务端配置</B>
 
 由于我不做服务端好多年，只会使用Tomcat，所以这边只讲下Tomcat的配置方法，使用其他服务器的同学请自行查找设置方法。
 
 打开tomcat/conf目录下的server.xml文件将HTTPS的配置打开，并进行如下配置：
 
-
-<Connector URIEncoding="UTF-8" protocol="org.apache.coyote.http11.Http11NioProtocol" port="8443" maxThreads="200" scheme="https" secure="true" SSLEnabled="true" sslProtocol="TLSv1.2" sslEnabledProtocols="TLSv1.2" keystoreFile="${catalina.base}/ca/ca.jks" keystorePass="123456" clientAuth="false" SSLVerifyClient="off" netZone="你的ip或域名"/>
+\<Connector URIEncoding="UTF-8" protocol="org.apache.coyote.http11.Http11NioProtocol" port="8443" maxThreads="200" scheme="https" secure="true" SSLEnabled="true" sslProtocol="TLSv1.2" sslEnabledProtocols="TLSv1.2" keystoreFile="${catalina.base}/ca/ca.jks" keystorePass="123456" clientAuth="false" SSLVerifyClient="off" netZone="你的ip或域名"/>
 
 keystoreFile是你.jks文件放置的目录，keystorePass是你制作证书时设置的密码，netZone填写你的ip或域名。注意苹果要求协议要TLSv1.2以上。
 
-3、iOS端配置
+<B>3、iOS端配置</B>
 
 首先把前面生成的.cer文件添加到项目中，注意在添加的时候选择要添加的targets。
 
 1.使用NSURLSession进行请求
 
 代码如下：
-
-
-NSString *urlString = @"https://xxxxxxx";
+<pre>NSString *urlString = @"https://xxxxxxx";
 NSURL *url = [NSURL URLWithString:urlString];
 NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:10.0f];
 NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:self delegateQueue:[NSOperationQueue mainQueue]];
 NSURLSessionDataTask *task = [session dataTaskWithRequest:request];
-[task resume];
+[task resume];</pre>
 
 需要实现NSURLSessionDataDelegate中的URLSession:didReceiveChallenge:completionHandler:方法来进行证书的校验，代码如下：
-
-
-- (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
+<pre>- (void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
  completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential * _Nullable credential))completionHandler {
     NSLog(@"证书认证");
     if ([[[challenge protectionSpace] authenticationMethod] isEqualToString: NSURLAuthenticationMethodServerTrust]) {
@@ -133,18 +128,17 @@ NSURLSessionDataTask *task = [session dataTaskWithRequest:request];
     NSURLCredential *credential = [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust];
     completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge,credential);
     return [[challenge sender] cancelAuthenticationChallenge: challenge];
-}
-
+}</pre>
 
 此时即可成功请求到服务端。
 
-注：调用SecTrustSetAnchorCertificates设置可信任证书列表后就只会在设置的列表中进行验证，会屏蔽掉系统原本的信任列表，要使系统的继续起作用只要调用SecTrustSetAnchorCertificates方法，第二个参数设置成NO即可。
+<B>注：调用SecTrustSetAnchorCertificates设置可信任证书列表后就只会在设置的列表中进行验证，会屏蔽掉系统原本的信任列表，要使系统的继续起作用只要调用SecTrustSetAnchorCertificates方法，第二个参数设置成NO即可。</B>
 
 2.使用AFNetworking进行请求
 
 AFNetworking首先需要配置AFSecurityPolicy类，AFSecurityPolicy类封装了证书校验的过程。
 
-
+<pre>
 /**
  AFSecurityPolicy分三种验证模式：
  AFSSLPinningModeNone:只是验证证书是否在信任列表中
@@ -207,7 +201,7 @@ __weak typeof(self) weakSelf = self;
         
     return disposition;
 }];
-
+</pre>
 
 上述代码通过给AFHTTPSessionManager重新设置证书验证回调来自己验证证书，然后将自己的证书加入到可信任的证书列表中，即可通过证书的校验。
 
@@ -216,13 +210,13 @@ __weak typeof(self) weakSelf = self;
 当类型为AFSSLPinningModeCertificate时
 
 
-return trustedCertificateCount == [serverCertificates count] - 1;
+<pre>return trustedCertificateCount == [serverCertificates count] - 1;</pre>
 
 
 为AFSSLPinningModePublicKey时
 
 
-return trustedPublicKeyCount > 0 && ((self.validatesCertificateChain) || (!self.validatesCertificateChain && trustedPublicKeyCount >= 1));
+<pre>return trustedPublicKeyCount > 0 && ((self.validatesCertificateChain) || (!self.validatesCertificateChain && trustedPublicKeyCount >= 1));</pre>
 
 
 去掉了第二块中的trustedPublicKeyCount == [serverCertificates count]的条件。
