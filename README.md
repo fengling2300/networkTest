@@ -9,14 +9,12 @@
 
 <pre>
 set ip=%1%
-
 md %ip%
-
-keytool -importkeystore -srckeystore ca.p12 -srcstoretype PKCS12 -srcstorepass 123456 -destkeystore ca.jks -deststoretype JKS -deststorepass 123456<br/>
-keytool -genkeypair -alias server-%ip% -keyalg RSA -keystore ca.jks -storepass 123456 -keypass 123456 -validity 3650 -dname "CN=%ip%, OU=ly, O=hik, L=hz, ST=zj, C=cn"<br/>
-keytool -certreq -alias server-%ip% -storepass 123456 -file %ip%\server-%ip%.certreq -keystore ca.jks<br/>
-keytool -gencert -alias ca -storepass 123456 -infile %ip%\server-%ip%.certreq -outfile %ip%\server-%ip%.cer -validity 3650 -keystore ca.jks<br/>
-keytool -importcert -trustcacerts -storepass 123456 -alias server-%ip% -file %ip%\server-%ip%.cer -keystore ca.jks<br/>
+keytool -importkeystore -srckeystore ca.p12 -srcstoretype PKCS12 -srcstorepass 123456 -destkeystore ca.jks -deststoretype JKS -deststorepass 123456
+keytool -genkeypair -alias server-%ip% -keyalg RSA -keystore ca.jks -storepass 123456 -keypass 123456 -validity 3650 -dname "CN=%ip%, OU=ly, O=hik, L=hz, ST=zj, C=cn"
+keytool -certreq -alias server-%ip% -storepass 123456 -file %ip%\server-%ip%.certreq -keystore ca.jks
+keytool -gencert -alias ca -storepass 123456 -infile %ip%\server-%ip%.certreq -outfile %ip%\server-%ip%.cer -validity 3650 -keystore ca.jks
+keytool -importcert -trustcacerts -storepass 123456 -alias server-%ip% -file %ip%\server-%ip%.cer -keystore ca.jks
 keytool -delete -keystore ca.jks -alias ca -storepass 123456
 </pre>
 
