@@ -7,15 +7,18 @@
 
 我这边使用的是xca来制作了根证书，制作流程请参考http://www.2cto.com/Article/201411/347512.html，由于xca无法导出.jsk的后缀，因此我们只要制作完根证书后以.p12的格式导出就行了，之后的证书制作由命令行来完成。自制一个批处理文件，添加如下命令：
 
-
+<pre>
 set ip=%1%
+
 md %ip%
-keytool -importkeystore -srckeystore ca.p12 -srcstoretype PKCS12 -srcstorepass 123456 -destkeystore ca.jks -deststoretype JKS -deststorepass 123456
-keytool -genkeypair -alias server-%ip% -keyalg RSA -keystore ca.jks -storepass 123456 -keypass 123456 -validity 3650 -dname "CN=%ip%, OU=ly, O=hik, L=hz, ST=zj, C=cn"
-keytool -certreq -alias server-%ip% -storepass 123456 -file %ip%\server-%ip%.certreq -keystore ca.jks
-keytool -gencert -alias ca -storepass 123456 -infile %ip%\server-%ip%.certreq -outfile %ip%\server-%ip%.cer -validity 3650 -keystore ca.jks  
-keytool -importcert -trustcacerts -storepass 123456 -alias server-%ip% -file %ip%\server-%ip%.cer -keystore ca.jks
+
+keytool -importkeystore -srckeystore ca.p12 -srcstoretype PKCS12 -srcstorepass 123456 -destkeystore ca.jks -deststoretype JKS -deststorepass 123456<br/>
+keytool -genkeypair -alias server-%ip% -keyalg RSA -keystore ca.jks -storepass 123456 -keypass 123456 -validity 3650 -dname "CN=%ip%, OU=ly, O=hik, L=hz, ST=zj, C=cn"<br/>
+keytool -certreq -alias server-%ip% -storepass 123456 -file %ip%\server-%ip%.certreq -keystore ca.jks<br/>
+keytool -gencert -alias ca -storepass 123456 -infile %ip%\server-%ip%.certreq -outfile %ip%\server-%ip%.cer -validity 3650 -keystore ca.jks<br/>
+keytool -importcert -trustcacerts -storepass 123456 -alias server-%ip% -file %ip%\server-%ip%.cer -keystore ca.jks<br/>
 keytool -delete -keystore ca.jks -alias ca -storepass 123456
+</pre>
 
 将上面加粗的ca.p12改成你导出的.p12文件的名称，123456改为你创建证书的密码。
 
